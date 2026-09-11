@@ -1,0 +1,4 @@
+.env
+tokped_data/
+*.exe
+vendor/
