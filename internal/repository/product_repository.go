@@ -135,35 +135,47 @@ func (r *productRepository) Delete(ctx context.Context, id bson.ObjectID) error 
 }
 
 func (r *productRepository) SeedInitialProducts(ctx context.Context) error {
+	imageFixes := map[string]string{
+		"Apple iPhone 15 Pro Max 256GB Natural Titanium":       "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&q=80",
+		"Sony WH-1000XM5 Wireless Noise Canceling Headphones": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80",
+		"Kaos Polos Pria Heavyweight Cotton Combed 24s":         "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&q=80",
+		"Jam Tangan Pria Automatic Skeleton Luxury Stainless":  "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600&q=80",
+		"Sepatu Sneaker Pria Casual Sporty Slip-on Breathable":  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80",
+	}
+
+	for name, img := range imageFixes {
+		_, _ = r.collection.UpdateMany(ctx, bson.M{"name": name}, bson.M{"$set": bson.M{"image": img}})
+	}
+
 	count, err := r.collection.CountDocuments(ctx, bson.M{})
 	if err != nil || count > 0 {
-		return nil // Sudah ada data
+		return nil
 	}
 
 	initialProducts := []interface{}{
 		model.Product{
 			Name: "Apple iPhone 15 Pro Max 256GB Natural Titanium", Price: 21999000, OriginalPrice: 24999000, Discount: 12,
-			Image: "https://images.tokopedia.net/img/cache/700/VqbcmM/2023/10/20/d193d5ff-c24c-474c-ba76-2f089d71ce04.jpg",
+			Image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&q=80",
 			Rating: 4.9, Sold: 450, Shop: "iBox Official", Location: "Jakarta Pusat", Badge: "official", Condition: "Baru", Category: "Elektronik", Stock: 50, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 		model.Product{
 			Name: "Sony WH-1000XM5 Wireless Noise Canceling Headphones", Price: 4999000, OriginalPrice: 5999000, Discount: 16,
-			Image: "https://images.tokopedia.net/img/cache/700/VqbcmM/2022/6/15/4508ecbb-ca80-4cf8-a907-7ff763806be4.jpg",
+			Image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80",
 			Rating: 4.8, Sold: 1200, Shop: "Sony Audio Official", Location: "Jakarta Selatan", Badge: "official", Condition: "Baru", Category: "Elektronik", Stock: 80, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 		model.Product{
 			Name: "Kaos Polos Pria Heavyweight Cotton Combed 24s", Price: 65000, OriginalPrice: 85000, Discount: 23,
-			Image: "https://images.tokopedia.net/img/cache/700/VqbcmM/2021/11/4/cb9515ee-63f5-4424-95eb-a83ebba1a884.jpg",
+			Image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&q=80",
 			Rating: 4.7, Sold: 15400, Shop: "BasicWear ID", Location: "Bandung", Badge: "power-merchant", Condition: "Baru", Category: "Fashion Pria", Stock: 500, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 		model.Product{
 			Name: "Jam Tangan Pria Automatic Skeleton Luxury Stainless", Price: 350000, OriginalPrice: 700000, Discount: 50,
-			Image: "https://images.tokopedia.net/img/cache/700/VqbcmM/2022/1/10/242d99d1-0f49-411a-85d9-482a4ebf0c45.jpg",
+			Image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600&q=80",
 			Rating: 4.6, Sold: 890, Shop: "TimeMaster Store", Location: "Jakarta Barat", Badge: "power-merchant", Condition: "Baru", Category: "Perhiasan", Stock: 100, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 		model.Product{
 			Name: "Sepatu Sneaker Pria Casual Sporty Slip-on Breathable", Price: 189000, OriginalPrice: 299000, Discount: 36,
-			Image: "https://images.tokopedia.net/img/cache/700/VqbcmM/2022/9/19/2d88fa7b-9c98-4ae7-a417-0b1a0e1c07ad.jpg",
+			Image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80",
 			Rating: 4.8, Sold: 3200, Shop: "SneakerZone Official", Location: "Surabaya", Badge: "official", Condition: "Baru", Category: "Fashion Pria", Stock: 200, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
