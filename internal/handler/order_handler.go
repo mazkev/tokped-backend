@@ -1,4 +1,4 @@
-package handler
+﻿package handler
 
 import (
 	"net/http"
@@ -17,7 +17,16 @@ func NewOrderHandler(orderService service.OrderService) *OrderHandler {
 	return &OrderHandler{orderService: orderService}
 }
 
-// CreateOrder: Shopper membuat pesanan baru (Checkout)
+// CreateOrder godoc
+// @Summary Buat Pesanan Baru (Checkout)
+// @Description Shopper membuat pesanan dari keranjang belanja
+// @Tags Orders
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body model.CreateOrderRequest true "Detail Order"
+// @Success 201 {object} model.Order
+// @Router /orders [post]
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	userName, _ := c.Get("name")
@@ -41,7 +50,14 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	})
 }
 
-// GetMyOrders: Shopper melihat riwayat pesanannya
+// GetMyOrders godoc
+// @Summary Riwayat Pesanan Saya
+// @Description Shopper melihat riwayat pesanan miliknya
+// @Tags Orders
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} []model.Order
+// @Router /orders/my [get]
 func (h *OrderHandler) GetMyOrders(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 
@@ -58,7 +74,14 @@ func (h *OrderHandler) GetMyOrders(c *gin.Context) {
 	})
 }
 
-// GetAllOrders: Admin melihat seluruh pesanan masuk dari semua shopper
+// GetAllOrders godoc
+// @Summary Semua Pesanan Masuk (Admin)
+// @Description Admin melihat semua transaksi masuk
+// @Tags Orders
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} []model.Order
+// @Router /orders [get]
 func (h *OrderHandler) GetAllOrders(c *gin.Context) {
 	orders, err := h.orderService.GetAllOrders(c.Request.Context())
 	if err != nil {
@@ -73,7 +96,15 @@ func (h *OrderHandler) GetAllOrders(c *gin.Context) {
 	})
 }
 
-// GetOrderByID: Detail 1 pesanan
+// GetOrderByID godoc
+// @Summary Detail 1 Pesanan
+// @Description Mengambil detail pesanan berdasarkan ID
+// @Tags Orders
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "ID Pesanan"
+// @Success 200 {object} model.Order
+// @Router /orders/{id} [get]
 func (h *OrderHandler) GetOrderByID(c *gin.Context) {
 	id := c.Param("id")
 	order, err := h.orderService.GetOrderByID(c.Request.Context(), id)
@@ -88,7 +119,17 @@ func (h *OrderHandler) GetOrderByID(c *gin.Context) {
 	})
 }
 
-// UpdateOrderStatus: Admin mengubah status pesanan ("Diproses", "Dikirim", "Selesai")
+// UpdateOrderStatus godoc
+// @Summary Update Status Pesanan (Admin)
+// @Description Admin mengubah status pesanan (Diproses, Dikirim, Selesai)
+// @Tags Orders
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path string true "ID Order"
+// @Param request body model.UpdateOrderStatusRequest true "Status Baru"
+// @Success 200 {object} map[string]string
+// @Router /orders/{id}/status [patch]
 func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	id := c.Param("id")
 	var req model.UpdateOrderStatusRequest
@@ -108,7 +149,15 @@ func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	})
 }
 
-// ApplyVoucher: Cek potongan kode diskon
+// ApplyVoucher godoc
+// @Summary Cek Kode Voucher Diskon
+// @Description Validasi kode promo (TOKOPEDIA10, HEMAT20)
+// @Tags Vouchers
+// @Accept json
+// @Produce json
+// @Param request body model.ApplyVoucherRequest true "Kode Voucher"
+// @Success 200 {object} model.Voucher
+// @Router /vouchers/apply [post]
 func (h *OrderHandler) ApplyVoucher(c *gin.Context) {
 	var req model.ApplyVoucherRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -128,7 +177,13 @@ func (h *OrderHandler) ApplyVoucher(c *gin.Context) {
 	})
 }
 
-// GetVouchers: Ambil daftar voucher yang sedang aktif
+// GetVouchers godoc
+// @Summary Daftar Voucher Aktif
+// @Description Mendapatkan voucher promo yang tersedia
+// @Tags Vouchers
+// @Produce json
+// @Success 200 {object} []model.Voucher
+// @Router /vouchers [get]
 func (h *OrderHandler) GetVouchers(c *gin.Context) {
 	vouchers, err := h.orderService.GetActiveVouchers(c.Request.Context())
 	if err != nil {

@@ -1,10 +1,31 @@
-package main
+﻿package main
+
+// @title Tokopedia Clone API
+// @version 1.0
+// @description REST API Backend Tokopedia Clone berbasis Golang, Gin, dan MongoDB.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Mazkev Tech
+// @contact.url https://github.com/mazkev
+// @contact.email support@tokopedia.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Format: "Bearer <token>"
 
 import (
 	"fmt"
 	"net/http"
 
 	"tokped-backend/config"
+	_ "tokped-backend/docs"
 	"tokped-backend/internal/handler"
 	"tokped-backend/internal/middleware"
 	"tokped-backend/internal/repository"
@@ -12,6 +33,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -44,7 +67,7 @@ func main() {
 	// 7. Inisialisasi Router Gin
 	r := gin.Default()
 
-	// 8. Konfigurasi CORS (siap untuk domain Vercel & testing lokal)
+	// 8. Konfigurasi CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{cfg.FrontendURL, "http://localhost:5173", "http://127.0.0.1:5173", "*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -53,7 +76,10 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// 9. Health Check
+	// 9. Swagger Documentation Endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Health Check
 	r.GET("/api/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
@@ -130,8 +156,8 @@ func main() {
 
 	// 15. Jalankan Server
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
-	fmt.Printf("ðŸš€ Tokopedia Backend API berjalan di http://localhost%s\n", serverAddr)
+	fmt.Printf("🚀 Tokopedia Backend API berjalan di http://localhost%s\n", serverAddr)
 	if err := r.Run(serverAddr); err != nil {
-		fmt.Printf("âŒ Gagal menjalankan server: %v\n", err)
+		fmt.Printf("❌ Gagal menjalankan server: %v\n", err)
 	}
 }

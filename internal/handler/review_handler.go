@@ -1,4 +1,4 @@
-package handler
+﻿package handler
 
 import (
 	"net/http"
@@ -17,7 +17,16 @@ func NewReviewHandler(reviewService service.ReviewService) *ReviewHandler {
 	return &ReviewHandler{reviewService: reviewService}
 }
 
-// CreateReview: Shopper memberikan review untuk produk yang dibeli
+// CreateReview godoc
+// @Summary Kirim Ulasan Produk
+// @Description Shopper memberikan rating dan ulasan pesanan yang telah selesai
+// @Tags Reviews
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body model.CreateReviewRequest true "Data Review"
+// @Success 201 {object} model.Review
+// @Router /reviews [post]
 func (h *ReviewHandler) CreateReview(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	userName, _ := c.Get("name")
@@ -41,7 +50,14 @@ func (h *ReviewHandler) CreateReview(c *gin.Context) {
 	})
 }
 
-// GetProductReviews: Melihat semua ulasan pada 1 produk
+// GetProductReviews godoc
+// @Summary Daftar Ulasan Produk
+// @Description Mengambil seluruh ulasan untuk produk tertentu
+// @Tags Reviews
+// @Produce json
+// @Param productId path string true "ID Produk"
+// @Success 200 {object} []model.Review
+// @Router /reviews/product/{productId} [get]
 func (h *ReviewHandler) GetProductReviews(c *gin.Context) {
 	productID := c.Param("productId")
 	reviews, err := h.reviewService.GetProductReviews(c.Request.Context(), productID)

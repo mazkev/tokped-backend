@@ -1,0 +1,691 @@
+basePath: /api
+definitions:
+  model.ApplyVoucherRequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  model.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/model.UserInfo'
+    type: object
+  model.CreateOrderRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.OrderItem'
+        minItems: 1
+        type: array
+      paymentMethod:
+        type: string
+      voucherCode:
+        type: string
+    required:
+    - items
+    - paymentMethod
+    type: object
+  model.CreateProductRequest:
+    properties:
+      badge:
+        type: string
+      category:
+        type: string
+      condition:
+        type: string
+      discount:
+        type: integer
+      image:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      originalPrice:
+        type: integer
+      price:
+        type: integer
+      rating:
+        type: number
+      shop:
+        type: string
+      stock:
+        minimum: 0
+        type: integer
+    required:
+    - category
+    - image
+    - name
+    - price
+    - stock
+    type: object
+  model.CreateReviewRequest:
+    properties:
+      comment:
+        type: string
+      orderId:
+        type: string
+      productId:
+        type: string
+      rating:
+        maximum: 5
+        minimum: 1
+        type: integer
+    required:
+    - comment
+    - orderId
+    - productId
+    - rating
+    type: object
+  model.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.Order:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      invoiceNumber:
+        description: 'contoh: INV/20260311/001'
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/model.OrderItem'
+        type: array
+      paymentMethod:
+        type: string
+      reviewed:
+        type: boolean
+      status:
+        description: '"Menunggu Konfirmasi", "Diproses", "Dikirim", "Selesai"'
+        type: string
+      total:
+        type: integer
+      updatedAt:
+        type: string
+      userId:
+        type: string
+      userName:
+        type: string
+      voucherUsed:
+        type: string
+    type: object
+  model.OrderItem:
+    properties:
+      id:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      qty:
+        type: integer
+      shop:
+        type: string
+    type: object
+  model.Product:
+    properties:
+      badge:
+        description: '"official" atau "power-merchant"'
+        type: string
+      category:
+        type: string
+      condition:
+        description: '"Baru" atau "Bekas"'
+        type: string
+      createdAt:
+        type: string
+      discount:
+        type: integer
+      id:
+        type: string
+      image:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      originalPrice:
+        type: integer
+      price:
+        type: integer
+      rating:
+        type: number
+      shop:
+        type: string
+      sold:
+        type: integer
+      stock:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  model.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  model.Review:
+    properties:
+      comment:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: string
+      orderId:
+        type: string
+      productId:
+        type: string
+      rating:
+        description: 1 - 5
+        type: integer
+      userId:
+        type: string
+      userName:
+        type: string
+    type: object
+  model.UpdateOrderStatusRequest:
+    properties:
+      status:
+        description: '"Diproses", "Dikirim", "Selesai"'
+        type: string
+    required:
+    - status
+    type: object
+  model.UpdateProductRequest:
+    properties:
+      badge:
+        type: string
+      category:
+        type: string
+      condition:
+        type: string
+      discount:
+        type: integer
+      image:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      originalPrice:
+        type: integer
+      price:
+        type: integer
+      rating:
+        type: number
+      shop:
+        type: string
+      stock:
+        type: integer
+    type: object
+  model.UserInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+    type: object
+  model.Voucher:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      discount:
+        type: integer
+      id:
+        type: string
+      isActive:
+        type: boolean
+      minSpend:
+        type: integer
+      type:
+        description: '"flat" atau "percent"'
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@tokopedia.com
+    name: Mazkev Tech
+    url: https://github.com/mazkev
+  description: REST API Backend Tokopedia Clone berbasis Golang, Gin, dan MongoDB.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Tokopedia Clone API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentikasi user/admin dan dapatkan JWT token
+      parameters:
+      - description: Kredensial Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.AuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login Pengguna
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Mendapatkan informasi akun user yang sedang login
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Profil Pengguna
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Membuat akun shopper baru
+      parameters:
+      - description: Data Registrasi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Registrasi User Baru
+      tags:
+      - Auth
+  /orders:
+    get:
+      description: Admin melihat semua transaksi masuk
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Order'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Semua Pesanan Masuk (Admin)
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: Shopper membuat pesanan dari keranjang belanja
+      parameters:
+      - description: Detail Order
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Order'
+      security:
+      - BearerAuth: []
+      summary: Buat Pesanan Baru (Checkout)
+      tags:
+      - Orders
+  /orders/{id}:
+    get:
+      description: Mengambil detail pesanan berdasarkan ID
+      parameters:
+      - description: ID Pesanan
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Order'
+      security:
+      - BearerAuth: []
+      summary: Detail 1 Pesanan
+      tags:
+      - Orders
+  /orders/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Admin mengubah status pesanan (Diproses, Dikirim, Selesai)
+      parameters:
+      - description: ID Order
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status Baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateOrderStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Status Pesanan (Admin)
+      tags:
+      - Orders
+  /orders/my:
+    get:
+      description: Shopper melihat riwayat pesanan miliknya
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Order'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Riwayat Pesanan Saya
+      tags:
+      - Orders
+  /products:
+    get:
+      description: Mengambil list produk dengan filter kategori, harga, dan pencarian
+      parameters:
+      - description: Filter Kategori
+        in: query
+        name: category
+        type: string
+      - description: Kata Kunci Nama
+        in: query
+        name: search
+        type: string
+      - description: Harga Minimum
+        in: query
+        name: min_price
+        type: integer
+      - description: Harga Maksimum
+        in: query
+        name: max_price
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Daftar Katalog Produk
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Menambahkan produk baru ke katalog (Khusus Admin)
+      parameters:
+      - description: Data Produk
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Product'
+      security:
+      - BearerAuth: []
+      summary: Tambah Produk Baru (Admin)
+      tags:
+      - Products
+  /products/{id}:
+    delete:
+      description: Menghapus produk dari katalog (Khusus Admin)
+      parameters:
+      - description: ID Produk
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus Produk (Admin)
+      tags:
+      - Products
+    get:
+      description: Mengambil detail 1 produk berdasarkan ID
+      parameters:
+      - description: ID Produk
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Product'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Detail Produk
+      tags:
+      - Products
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui data produk/stok (Khusus Admin)
+      parameters:
+      - description: ID Produk
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Product'
+      security:
+      - BearerAuth: []
+      summary: Update Produk (Admin)
+      tags:
+      - Products
+  /reviews:
+    post:
+      consumes:
+      - application/json
+      description: Shopper memberikan rating dan ulasan pesanan yang telah selesai
+      parameters:
+      - description: Data Review
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Review'
+      security:
+      - BearerAuth: []
+      summary: Kirim Ulasan Produk
+      tags:
+      - Reviews
+  /reviews/product/{productId}:
+    get:
+      description: Mengambil seluruh ulasan untuk produk tertentu
+      parameters:
+      - description: ID Produk
+        in: path
+        name: productId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Review'
+            type: array
+      summary: Daftar Ulasan Produk
+      tags:
+      - Reviews
+  /vouchers:
+    get:
+      description: Mendapatkan voucher promo yang tersedia
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Voucher'
+            type: array
+      summary: Daftar Voucher Aktif
+      tags:
+      - Vouchers
+  /vouchers/apply:
+    post:
+      consumes:
+      - application/json
+      description: Validasi kode promo (TOKOPEDIA10, HEMAT20)
+      parameters:
+      - description: Kode Voucher
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ApplyVoucherRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Voucher'
+      summary: Cek Kode Voucher Diskon
+      tags:
+      - Vouchers
+securityDefinitions:
+  BearerAuth:
+    description: 'Format: "Bearer <token>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
