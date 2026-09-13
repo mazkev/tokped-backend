@@ -48,16 +48,16 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
-	if email == "admin@tokopedia.com" {
-		c, _ := r.collection.CountDocuments(ctx, bson.M{"email": "admin@tokopedia.com"})
-		if c == 0 {
-			_ = r.SeedAdmin(ctx)
-		}
-	}
 	var user model.User
 	err := r.collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
+			if email == "admin@tokopedia.com" {
+				_ = r.SeedAdmin(ctx)
+				if errRetry := r.collection.FindOne(ctx, bson.M{"email": email}).Decode(&user); errRetry == nil {
+					return &user, nil
+				}
+			}
 			return nil, nil // User tidak ditemukan
 		}
 		return nil, err
@@ -80,11 +80,11 @@ func (r *userRepository) FindByID(ctx context.Context, id bson.ObjectID) (*model
 // SeedAdmin membuat akun admin bawaan jika belum ada di database
 func (r *userRepository) SeedAdmin(ctx context.Context) error {
 	adminEmail := "admin@tokopedia.com"
-	existing, err := r.FindByEmail(ctx, adminEmail)
+	count, err := r.collection.CountDocuments(ctx, bson.M{"email": adminEmail})
 	if err != nil {
 		return err
 	}
-	if existing != nil {
+	if count > 0 {
 		return nil // Admin sudah ada
 	}
 
