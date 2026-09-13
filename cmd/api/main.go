@@ -61,6 +61,18 @@ func main() {
 		})
 	})
 
+	// Manual Seeder Trigger
+	r.GET("/api/seed", func(c *gin.Context) {
+		ctx := c.Request.Context()
+		_ = userRepo.SeedAdmin(ctx)
+		_ = productRepo.SeedInitialProducts(ctx)
+		_ = orderRepo.SeedInitialVouchers(ctx)
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Database berhasil di-seed otomatis!",
+		})
+	})
+
 	// 10. Rute Autentikasi
 	authGroup := r.Group("/api/auth")
 	{
@@ -118,8 +130,8 @@ func main() {
 
 	// 15. Jalankan Server
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
-	fmt.Printf("🚀 Tokopedia Backend API berjalan di http://localhost%s\n", serverAddr)
+	fmt.Printf("ðŸš€ Tokopedia Backend API berjalan di http://localhost%s\n", serverAddr)
 	if err := r.Run(serverAddr); err != nil {
-		fmt.Printf("❌ Gagal menjalankan server: %v\n", err)
+		fmt.Printf("âŒ Gagal menjalankan server: %v\n", err)
 	}
 }

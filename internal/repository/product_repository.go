@@ -38,6 +38,10 @@ func NewProductRepository(db *mongo.Database) ProductRepository {
 }
 
 func (r *productRepository) FindAll(ctx context.Context, filter model.ProductFilter) ([]model.Product, error) {
+	totalCount, _ := r.collection.CountDocuments(ctx, bson.M{})
+	if totalCount == 0 {
+		_ = r.SeedInitialProducts(ctx)
+	}
 	query := bson.M{}
 
 	if filter.Category != "" {

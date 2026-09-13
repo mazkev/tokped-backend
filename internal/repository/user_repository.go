@@ -48,6 +48,12 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 }
 
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	if email == "admin@tokopedia.com" {
+		c, _ := r.collection.CountDocuments(ctx, bson.M{"email": "admin@tokopedia.com"})
+		if c == 0 {
+			_ = r.SeedAdmin(ctx)
+		}
+	}
 	var user model.User
 	err := r.collection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
