@@ -98,13 +98,15 @@ func main() {
 	// 11. Swagger Documentation Endpoint
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Health Check
-	r.GET("/api/health", func(c *gin.Context) {
+	// Health Checks
+	healthHandler := func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
-			"message": "Tokopedia Backend API is running!",
+			"message": "Tokopedia Backend Monolith API is running!",
 		})
-	})
+	}
+	r.GET("/health", healthHandler)
+	r.GET("/api/health", healthHandler)
 
 	// Manual Seeder Trigger
 	r.GET("/api/seed", func(c *gin.Context) {
@@ -173,28 +175,32 @@ func main() {
 		reviewGroup.POST("", middleware.AuthMiddleware(cfg.JWTSecret), reviewHandler.CreateReview)
 	}
 
-	// 17. Konfigurasi HTTP Server dengan Timeout & Graceful Shutdown
-		port := os.Getenv("MONOLITH_PORT")
+	// 17. Konfigurasi HTTP Server dengan Port 8080 & Graceful Shutdown
+	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081"
+		port = os.Getenv("MONOLITH_PORT")
+	}
+	if port == "" {
+		port = "8080"
 	}
 	srv := &http.Server{
-		Addr:    ":" + port, // atau ":8080"
+		Addr:    ":" + port,
 		Handler: r,
 	}
 
 	// Jalankan server di goroutine
-		go func() {
-		log.Printf("Server monolith berjalan di port :%s\n", port)
+	go func() {
+		log.Printf("🚀 Tokopedia Backend Monolith berjalan di port :%s\n", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
-	// 3. Graceful shutdown
+
+	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	fmt.Println("\n🛑 Menerima sinyal terminasi, mematikan server secara graceful...")
+	fmt.Println("\n⚠️ Menerima sinyal terminasi, mematikan server secara graceful...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

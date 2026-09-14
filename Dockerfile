@@ -1,9 +1,5 @@
-﻿# Multi-target Dockerfile
-ARG SERVICE=api
-
-# Stage 1: Build the Go binary
+﻿# Production Dockerfile - Tokopedia Backend Monolith
 FROM golang:alpine AS builder
-ARG SERVICE
 
 WORKDIR /app
 
@@ -15,9 +11,9 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/server ./cmd/${SERVICE}
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/server ./cmd/api
 
-# Stage 2: Minimal runtime image
+# Minimal runtime
 FROM alpine:latest
 
 WORKDIR /app
@@ -26,5 +22,7 @@ RUN apk --no-cache add ca-certificates tzdata
 ENV TZ=Asia/Jakarta
 
 COPY --from=builder /app/server /app/server
+
+EXPOSE 8080
 
 CMD ["/app/server"]
