@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 // @title Tokopedia Clone API
 // @version 1.0
@@ -23,6 +23,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -173,24 +174,23 @@ func main() {
 	}
 
 	// 17. Konfigurasi HTTP Server dengan Timeout & Graceful Shutdown
-	serverAddr := fmt.Sprintf(":%s", cfg.Port)
+		port := os.Getenv("MONOLITH_PORT")
+	if port == "" {
+		port = "8081"
+	}
 	srv := &http.Server{
-		Addr:         serverAddr,
-		Handler:      r,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		Addr:    ":" + port, // atau ":8080"
+		Handler: r,
 	}
 
 	// Jalankan server di goroutine
-	go func() {
-		fmt.Printf("🚀 Tokopedia Backend API berjalan di http://localhost%s (Mode: %s)\n", serverAddr, gin.Mode())
+		go func() {
+		log.Printf("Server monolith berjalan di port :%s\n", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Printf("❌ Gagal menjalankan server: %v\n", err)
+			log.Fatalf("listen: %s\n", err)
 		}
 	}()
-
-	// Menunggu sinyal OS untuk Graceful Shutdown (SIGINT, SIGTERM)
+	// 3. Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
