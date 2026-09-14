@@ -5,12 +5,19 @@ services:
     image: mongo:latest
     container_name: tokped-mongo
     restart: always
+    command: mongod --wiredTigerCacheSizeGB 0.25
     ports:
-      - "27017:27017"
+      # Amankan MongoDB: hanya listen di localhost VPS (tidak terbuka ke internet publik)
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
       - tokped-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build: .
@@ -29,6 +36,11 @@ services:
       - mongodb
     networks:
       - tokped-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   mongo_data:
