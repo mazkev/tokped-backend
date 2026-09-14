@@ -31,17 +31,13 @@ func NewProductRepository(db *mongo.Database) ProductRepository {
 		collection: db.Collection("products"),
 	}
 
-	// Otomatis seed data produk contoh jika collection masih kosong
+	// Otomatis seed data produk contoh jika collection masih kosong saat startup
 	_ = repo.SeedInitialProducts(context.Background())
 
 	return repo
 }
 
 func (r *productRepository) FindAll(ctx context.Context, filter model.ProductFilter) ([]model.Product, error) {
-	totalCount, _ := r.collection.CountDocuments(ctx, bson.M{})
-	if totalCount == 0 {
-		_ = r.SeedInitialProducts(ctx)
-	}
 	query := bson.M{}
 
 	if filter.Category != "" {

@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 // @title Tokopedia Clone API
 // @version 1.0
@@ -21,8 +21,13 @@
 // @description Format: "Bearer <token>"
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"tokped-backend/config"
 	_ "tokped-backend/docs"
@@ -41,33 +46,46 @@ func main() {
 	// 1. Muat Konfigurasi dari .env
 	cfg := config.LoadConfig()
 
-	// 2. Hubungkan ke MongoDB
+	// 2. Set Gin Mode (Release Mode menghemat alokasi memory & stdout logging di server)
+	if cfg.GinMode != "" {
+		gin.SetMode(cfg.GinMode)
+	}
+
+	// 3. Hubungkan ke MongoDB dengan Connection Pooling
 	db := config.ConnectDB(cfg)
 
-	// 3. Inisialisasi Auth
+	// 4. Inisialisasi Database Indexes untuk performa query instan & integritas data
+	config.EnsureIndexes(db)
+
+	// 5. Inisialisasi Auth
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
 	authHandler := handler.NewAuthHandler(authService)
 
-	// 4. Inisialisasi Product
+	// 6. Inisialisasi Product
 	productRepo := repository.NewProductRepository(db)
 	productService := service.NewProductService(productRepo)
 	productHandler := handler.NewProductHandler(productService)
 
-	// 5. Inisialisasi Order & Voucher
+	// 7. Inisialisasi Order & Voucher
 	orderRepo := repository.NewOrderRepository(db)
 	orderService := service.NewOrderService(orderRepo)
 	orderHandler := handler.NewOrderHandler(orderService)
 
-	// 6. Inisialisasi Review
+	// 8. Inisialisasi Review
 	reviewRepo := repository.NewReviewRepository(db)
 	reviewService := service.NewReviewService(reviewRepo, orderRepo, productRepo)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
-	// 7. Inisialisasi Router Gin
-	r := gin.Default()
+	// 9. Inisialisasi Router Gin
+	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
-	// 8. Konfigurasi CORS
+	// Nonaktifkan warning proxy jika tidak diperlukan
+	_ = r.SetTrustedProxies(nil)
+
+	// 10. Konfigurasi CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{cfg.FrontendURL, "http://localhost:5173", "http://127.0.0.1:5173", "*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -76,7 +94,7 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// 9. Swagger Documentation Endpoint
+	// 11. Swagger Documentation Endpoint
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Health Check
@@ -99,7 +117,7 @@ func main() {
 		})
 	})
 
-	// 10. Rute Autentikasi
+	// 12. Rute Autentikasi
 	authGroup := r.Group("/api/auth")
 	{
 		authGroup.POST("/register", authHandler.Register)
@@ -107,7 +125,7 @@ func main() {
 		authGroup.GET("/me", middleware.AuthMiddleware(cfg.JWTSecret), authHandler.GetProfile)
 	}
 
-	// 11. Rute Produk
+	// 13. Rute Produk
 	productGroup := r.Group("/api/products")
 	{
 		productGroup.GET("", productHandler.GetAll)
@@ -123,14 +141,14 @@ func main() {
 		}
 	}
 
-	// 12. Rute Voucher
+	// 14. Rute Voucher
 	voucherGroup := r.Group("/api/vouchers")
 	{
 		voucherGroup.GET("", orderHandler.GetVouchers)
 		voucherGroup.POST("/apply", orderHandler.ApplyVoucher)
 	}
 
-	// 13. Rute Order
+	// 15. Rute Order
 	orderGroup := r.Group("/api/orders")
 	orderGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	{
@@ -147,17 +165,42 @@ func main() {
 		}
 	}
 
-	// 14. Rute Review
+	// 16. Rute Review
 	reviewGroup := r.Group("/api/reviews")
 	{
 		reviewGroup.GET("/product/:productId", reviewHandler.GetProductReviews)
 		reviewGroup.POST("", middleware.AuthMiddleware(cfg.JWTSecret), reviewHandler.CreateReview)
 	}
 
-	// 15. Jalankan Server
+	// 17. Konfigurasi HTTP Server dengan Timeout & Graceful Shutdown
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)
-	fmt.Printf("🚀 Tokopedia Backend API berjalan di http://localhost%s\n", serverAddr)
-	if err := r.Run(serverAddr); err != nil {
-		fmt.Printf("❌ Gagal menjalankan server: %v\n", err)
+	srv := &http.Server{
+		Addr:         serverAddr,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
+
+	// Jalankan server di goroutine
+	go func() {
+		fmt.Printf("🚀 Tokopedia Backend API berjalan di http://localhost%s (Mode: %s)\n", serverAddr, gin.Mode())
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Printf("❌ Gagal menjalankan server: %v\n", err)
+		}
+	}()
+
+	// Menunggu sinyal OS untuk Graceful Shutdown (SIGINT, SIGTERM)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	fmt.Println("\n🛑 Menerima sinyal terminasi, mematikan server secara graceful...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		fmt.Printf("❌ Kesalahan saat shutdown: %v\n", err)
+	}
+	fmt.Println("✅ Server Tokopedia Backend berhasil dimatikan dengan aman.")
 }
