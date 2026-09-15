@@ -1,0 +1,53 @@
+﻿name: Deploy Backend to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  lint-and-test:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Verify Dependencies & Code Quality
+        run: |
+          go mod verify
+          go vet ./cmd/api/main.go
+
+  deploy:
+    name: Deploy to VPS
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            echo "🚀 Memulai deployment otomatis Tokopedia Backend..."
+            cd ~/tokped-backend || cd /root/tokped-backend
+
+            echo "📥 Mengambil commit terbaru dari branch main..."
+            git pull origin main
+
+            echo "🐳 Menjalankan Docker Compose..."
+            docker compose up -d --build
+
+            echo "🧹 Membersihkan image lama..."
+            docker image prune -f
+
+            echo "✅ Deployment selesai! Backend aktif dan berjalan normal."
