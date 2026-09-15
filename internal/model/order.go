@@ -1,4 +1,4 @@
-package model
+﻿package model
 
 import (
 	"time"
@@ -27,6 +27,15 @@ type OrderItem struct {
 	Shop      string `bson:"shop" json:"shop"`
 }
 
+// Payment Info untuk simulasi payment gateway
+type PaymentInfo struct {
+	VANumber      string     `bson:"va_number,omitempty" json:"vaNumber,omitempty"`
+	QRCodeData    string     `bson:"qr_code_data,omitempty" json:"qrCodeData,omitempty"`
+	ExpiredAt     time.Time  `bson:"expired_at" json:"expiredAt"`
+	PaidAt        *time.Time `bson:"paid_at,omitempty" json:"paidAt,omitempty"`
+	PaymentStatus string     `bson:"payment_status" json:"paymentStatus"` // "PENDING", "PAID", "EXPIRED"
+}
+
 // Order Model
 type Order struct {
 	ID            bson.ObjectID `bson:"_id,omitempty" json:"id"`
@@ -35,8 +44,9 @@ type Order struct {
 	UserName      string        `bson:"user_name" json:"userName"`
 	Items         []OrderItem   `bson:"items" json:"items"`
 	Total         int           `bson:"total" json:"total"`
-	Status        string        `bson:"status" json:"status"` // "Menunggu Konfirmasi", "Diproses", "Dikirim", "Selesai"
+	Status        string        `bson:"status" json:"status"` // "Menunggu Pembayaran", "Diproses", "Dikirim", "Selesai"
 	PaymentMethod string        `bson:"payment_method" json:"paymentMethod"`
+	PaymentInfo   PaymentInfo   `bson:"payment_info" json:"paymentInfo"`
 	VoucherUsed   string        `bson:"voucher_used,omitempty" json:"voucherUsed"`
 	Reviewed      bool          `bson:"reviewed" json:"reviewed"`
 	CreatedAt     time.Time     `bson:"created_at" json:"createdAt"`

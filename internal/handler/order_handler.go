@@ -50,6 +50,34 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	})
 }
 
+// PayOrder godoc
+// @Summary Simulasikan Pembayaran Pesanan (Tokopedia Pay)
+// @Description Pengguna melunasi pesanan yang berstatus Menunggu Pembayaran
+// @Tags Orders
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "ID Pesanan"
+// @Success 200 {object} model.Order
+// @Router /orders/{id}/pay [post]
+func (h *OrderHandler) PayOrder(c *gin.Context) {
+	id := c.Param("id")
+	userID, _ := c.Get("user_id")
+	role, _ := c.Get("role")
+	isAdmin := role == "admin"
+
+	order, err := h.orderService.PayOrder(c.Request.Context(), id, userID.(string), isAdmin)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Pembayaran berhasil diverifikasi! Pesanan Anda sedang diproses penjual.",
+		"data":    order,
+	})
+}
+
 // GetMyOrders godoc
 // @Summary Riwayat Pesanan Saya
 // @Description Shopper melihat riwayat pesanan miliknya

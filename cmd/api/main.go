@@ -156,6 +156,7 @@ func main() {
 	orderGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	{
 		orderGroup.POST("", orderHandler.CreateOrder)       // Shopper checkout
+		orderGroup.POST("/:id/pay", orderHandler.PayOrder)  // Simulasi Bayar Tokopedia Pay
 		orderGroup.GET("/my", orderHandler.GetMyOrders)     // Riwayat order shopper
 		orderGroup.GET("/:id", orderHandler.GetOrderByID)   // Detail order
 

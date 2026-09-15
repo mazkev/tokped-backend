@@ -1,4 +1,4 @@
-package repository
+﻿package repository
 
 import (
 	"context"
@@ -21,6 +21,7 @@ type OrderRepository interface {
 	FindOrderByID(ctx context.Context, id bson.ObjectID) (*model.Order, error)
 	UpdateOrderStatus(ctx context.Context, id bson.ObjectID, status string) error
 	SetOrderReviewed(ctx context.Context, id bson.ObjectID) error
+	PayOrder(ctx context.Context, id bson.ObjectID) error
 
 	// Voucher queries
 	FindVoucherByCode(ctx context.Context, code string) (*model.Voucher, error)
@@ -48,7 +49,9 @@ func NewOrderRepository(db *mongo.Database) OrderRepository {
 func (r *orderRepository) CreateOrder(ctx context.Context, order *model.Order) error {
 	order.CreatedAt = time.Now()
 	order.UpdatedAt = time.Now()
-	order.Status = "Menunggu Konfirmasi"
+	if order.Status == "" {
+		order.Status = "Menunggu Pembayaran"
+	}
 	order.Reviewed = false
 
 	res, err := r.orderCol.InsertOne(ctx, order)
@@ -118,6 +121,26 @@ func (r *orderRepository) UpdateOrderStatus(ctx context.Context, id bson.ObjectI
 	}
 	_, err := r.orderCol.UpdateOne(ctx, bson.M{"_id": id}, update)
 	return err
+}
+
+func (r *orderRepository) PayOrder(ctx context.Context, id bson.ObjectID) error {
+	now := time.Now()
+	update := bson.M{
+		"$set": bson.M{
+			"status":                      "Diproses",
+			"payment_info.payment_status": "PAID",
+			"payment_info.paid_at":        now,
+			"updated_at":                  now,
+		},
+	}
+	res, err := r.orderCol.UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+	if res.MatchedCount == 0 {
+		return errors.New("pesanan tidak ditemukan")
+	}
+	return nil
 }
 
 func (r *orderRepository) SetOrderReviewed(ctx context.Context, id bson.ObjectID) error {
