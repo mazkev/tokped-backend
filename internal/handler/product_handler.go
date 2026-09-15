@@ -1,7 +1,13 @@
 ﻿package handler
 
 import (
+	"fmt"
+	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"tokped-backend/internal/model"
 	"tokped-backend/internal/service"
@@ -151,5 +157,74 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Produk berhasil dihapus",
+	})
+}
+
+// UploadImage godoc
+// @Summary Unggah Foto Produk (Admin)
+// @Description Mengunggah file gambar produk langsung ke storage server (Khusus Admin)
+// @Tags Products
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param image formData file true "File Gambar (JPG, PNG, WEBP, maks 5MB)"
+// @Success 200 {object} map[string]interface{}
+// @Router /products/upload [post]
+func (h *ProductHandler) UploadImage(c *gin.Context) {
+	// Batasi ukuran upload maksimal 5MB
+	if err := c.Request.ParseMultipartForm(5 << 20); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ukuran file terlalu besar, maksimal 5MB"})
+		return
+	}
+
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File gambar tidak ditemukan"})
+		return
+	}
+
+	// Validasi ekstensi file
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	validExts := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".webp": true,
+	}
+	if !validExts[ext] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format file tidak didukung. Gunakan JPG, PNG, atau WEBP."})
+		return
+	}
+
+	// Buat direktori uploads jika belum ada
+	uploadDir := "./uploads"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyiapkan direktori penyimpanan"})
+		return
+	}
+
+	// Generate nama file unik
+	filename := fmt.Sprintf("prod_%d_%04d%s", time.Now().UnixNano(), rand.Intn(10000), ext)
+	dst := filepath.Join(uploadDir, filename)
+
+	if err := c.SaveUploadedFile(file, dst); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file gambar ke server"})
+		return
+	}
+
+	// Buat URL yang bisa diakses publik
+	scheme := "http"
+	if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	host := c.Request.Host
+	fullURL := fmt.Sprintf("%s://%s/uploads/%s", scheme, host, filename)
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "success",
+		"message":  "Gambar berhasil diunggah",
+		"filename": filename,
+		"imageUrl": fullURL,
+		"path":     "/uploads/" + filename,
 	})
 }

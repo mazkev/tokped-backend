@@ -32,6 +32,8 @@ services:
       - JWT_SECRET=tokopedia_production_secret_key_vps_2026
       - FRONTEND_URL=*
       - GIN_MODE=release
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       - mongodb
     networks:
@@ -44,6 +46,8 @@ services:
 
 volumes:
   mongo_data:
+    driver: local
+  uploads_data:
     driver: local
 
 networks:

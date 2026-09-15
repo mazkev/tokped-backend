@@ -95,6 +95,10 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// Layani file upload statis secara publik
+	_ = os.MkdirAll("./uploads", 0755)
+	r.Static("/uploads", "./uploads")
+
 	// 11. Swagger Documentation Endpoint
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -139,6 +143,7 @@ func main() {
 		adminProduct.Use(middleware.AuthMiddleware(cfg.JWTSecret), middleware.AdminOnly())
 		{
 			adminProduct.POST("", productHandler.Create)
+			adminProduct.POST("/upload", productHandler.UploadImage)
 			adminProduct.PUT("/:id", productHandler.Update)
 			adminProduct.DELETE("/:id", productHandler.Delete)
 		}

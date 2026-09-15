@@ -18,7 +18,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata && mkdir -p /app/uploads
 ENV TZ=Asia/Jakarta
 
 COPY --from=builder /app/server /app/server
