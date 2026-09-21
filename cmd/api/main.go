@@ -83,6 +83,8 @@ func main() {
 
 	// 9. Inisialisasi Router Gin
 	r := gin.New()
+	r.Use(middleware.RequestID())
+	r.Use(middleware.GlobalRateLimiter())
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
@@ -94,7 +96,7 @@ func main() {
 		AllowOrigins:     []string{cfg.FrontendURL, "http://localhost:5173", "http://127.0.0.1:5173", "*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+		ExposeHeaders:    []string{"Content-Length", "X-Request-ID"},
 		AllowCredentials: true,
 	}))
 
