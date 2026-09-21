@@ -46,6 +46,9 @@ import (
 func main() {
 	// 1. Muat Konfigurasi dari .env
 	cfg := config.LoadConfig()
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("❌ Konfigurasi startup tidak valid: %v", err)
+	}
 
 	// 2. Set Gin Mode (Release Mode menghemat alokasi memory & stdout logging di server)
 	if cfg.GinMode != "" {

@@ -4,37 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
-
-type Config struct {
-	Port        string
-	MongoURI    string
-	DBName      string
-	JWTSecret   string
-	FrontendURL string
-	GinMode     string
-}
-
-func LoadConfig() *Config {
-	// Membaca file .env jika tersedia
-	_ = godotenv.Load()
-
-	return &Config{
-		Port:        getEnv("PORT", "8080"),
-		MongoURI:    getEnv("MONGO_URI", "mongodb://localhost:27017"),
-		DBName:      getEnv("DB_NAME", "tokopedia_db"),
-		JWTSecret:   getEnv("JWT_SECRET", "default_secret_key_123"),
-		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
-		GinMode:     getEnv("GIN_MODE", "release"),
-	}
-}
 
 func ConnectDB(cfg *Config) *mongo.Database {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -58,7 +33,7 @@ func ConnectDB(cfg *Config) *mongo.Database {
 		log.Fatalf("❌ Gagal terhubung ke MongoDB: %v", err)
 	}
 
-	fmt.Println("✅ Berhasil terhubung ke MongoDB (Pool: min 5, max 50):", cfg.DBName)
+	fmt.Println("🚀 Berhasil terhubung ke MongoDB (Pool: min 5, max 50):", cfg.DBName)
 	return client.Database(cfg.DBName)
 }
 
@@ -98,11 +73,4 @@ func EnsureIndexes(db *mongo.Database) {
 	})
 
 	fmt.Println("⚡ Database indexes MongoDB berhasil diinisialisasi!")
-}
-
-func getEnv(key, fallback string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
-	}
-	return fallback
 }
