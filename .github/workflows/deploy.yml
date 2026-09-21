@@ -19,10 +19,11 @@ jobs:
           go-version: '1.24'
           cache: true
 
-      - name: Verify Dependencies & Code Quality
+      - name: Verify Dependencies, Code Quality & Run Tests
         run: |
           go mod verify
-          go vet ./cmd/api/main.go
+          go vet ./...
+          go test -v ./...
 
   deploy:
     name: Deploy to VPS
