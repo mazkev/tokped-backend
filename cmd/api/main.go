@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 // @title Tokopedia Clone API
 // @version 1.0
