@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
 	"time"
 
+	"tokped-backend/internal/apperror"
 	"tokped-backend/internal/model"
 	"tokped-backend/internal/repository"
 
@@ -35,14 +35,14 @@ func NewOrderService(orderRepo repository.OrderRepository) OrderService {
 
 func (s *orderService) CreateOrder(ctx context.Context, userID, userName string, req model.CreateOrderRequest) (*model.Order, error) {
 	if len(req.Items) == 0 {
-		return nil, errors.New("keranjang belanja kosong")
+		return nil, apperror.ErrEmptyCart
 	}
 
 	// 1. Hitung total belanja
 	subtotal := 0
 	for _, item := range req.Items {
 		if item.Qty <= 0 {
-			return nil, errors.New("jumlah barang minimal 1")
+			return nil, apperror.ErrInvalidItemQuantity
 		}
 		subtotal += item.Price * item.Qty
 	}
@@ -57,7 +57,7 @@ func (s *orderService) CreateOrder(ctx context.Context, userID, userName string,
 			return nil, err
 		}
 		if voucher == nil {
-			return nil, errors.New("kode voucher tidak valid atau sudah kadaluwarsa")
+			return nil, apperror.ErrInvalidVoucher
 		}
 		if subtotal < voucher.MinSpend {
 			return nil, fmt.Errorf("minimum belanja untuk voucher ini adalah Rp%d", voucher.MinSpend)
@@ -130,12 +130,12 @@ func (s *orderService) GetAllOrders(ctx context.Context) ([]model.Order, error) 
 func (s *orderService) GetOrderByID(ctx context.Context, idStr string) (*model.Order, error) {
 	oid, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
-		return nil, errors.New("ID pesanan tidak valid")
+		return nil, apperror.ErrInvalidOrderID
 	}
 
 	order, err := s.orderRepo.FindOrderByID(ctx, oid)
 	if err != nil || order == nil {
-		return nil, errors.New("pesanan tidak ditemukan")
+		return nil, apperror.ErrOrderNotFound
 	}
 
 	return order, nil
@@ -152,12 +152,12 @@ func (s *orderService) UpdateOrderStatus(ctx context.Context, idStr string, stat
 	}
 
 	if !validStatuses[status] {
-		return errors.New("status pesanan tidak valid")
+		return apperror.ErrInvalidOrderStatus
 	}
 
 	oid, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
-		return errors.New("ID pesanan tidak valid")
+		return apperror.ErrInvalidOrderID
 	}
 
 	return s.orderRepo.UpdateOrderStatus(ctx, oid, status)
@@ -166,16 +166,16 @@ func (s *orderService) UpdateOrderStatus(ctx context.Context, idStr string, stat
 func (s *orderService) PayOrder(ctx context.Context, idStr string, userID string, isAdmin bool) (*model.Order, error) {
 	oid, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
-		return nil, errors.New("ID pesanan tidak valid")
+		return nil, apperror.ErrInvalidOrderID
 	}
 
 	order, err := s.orderRepo.FindOrderByID(ctx, oid)
 	if err != nil || order == nil {
-		return nil, errors.New("pesanan tidak ditemukan")
+		return nil, apperror.ErrOrderNotFound
 	}
 
 	if order.UserID != userID && !isAdmin {
-		return nil, errors.New("akses ditolak: bukan pemilik pesanan ini")
+		return nil, apperror.ErrAccessDenied
 	}
 
 	if order.Status != "Menunggu Pembayaran" && order.Status != "Menunggu Konfirmasi" {
@@ -201,7 +201,7 @@ func (s *orderService) ApplyVoucher(ctx context.Context, code string) (*model.Vo
 		return nil, err
 	}
 	if voucher == nil {
-		return nil, errors.New("voucher tidak ditemukan atau tidak aktif")
+		return nil, apperror.ErrInvalidVoucher
 	}
 	return voucher, nil
 }

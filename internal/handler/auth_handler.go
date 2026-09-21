@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"tokped-backend/internal/apperror"
 	"tokped-backend/internal/model"
 	"tokped-backend/internal/service"
 
@@ -30,7 +31,7 @@ func NewAuthHandler(authService service.AuthService) *AuthHandler {
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req model.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -66,7 +67,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	resp, err := h.authService.Login(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -95,7 +96,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 
 	profile, err := h.authService.GetProfile(c.Request.Context(), userID.(string))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 

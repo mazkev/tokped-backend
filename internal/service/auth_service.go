@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 	"time"
 
+	"tokped-backend/internal/apperror"
 	"tokped-backend/internal/model"
 	"tokped-backend/internal/repository"
 
@@ -38,7 +38,7 @@ func (s *authService) Register(ctx context.Context, req model.RegisterRequest) (
 		return nil, err
 	}
 	if existingUser != nil {
-		return nil, errors.New("email sudah terdaftar")
+		return nil, apperror.ErrEmailAlreadyRegistered
 	}
 
 	// 2. Hash password menggunakan bcrypt
@@ -83,12 +83,12 @@ func (s *authService) Login(ctx context.Context, req model.LoginRequest) (*model
 		return nil, err
 	}
 	if user == nil {
-		return nil, errors.New("email atau password salah")
+		return nil, apperror.ErrInvalidCredentials
 	}
 
 	// 2. Verifikasi kecocokan password bcrypt
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return nil, errors.New("email atau password salah")
+		return nil, apperror.ErrInvalidCredentials
 	}
 
 	// 3. Generate JWT Token
@@ -111,12 +111,12 @@ func (s *authService) Login(ctx context.Context, req model.LoginRequest) (*model
 func (s *authService) GetProfile(ctx context.Context, idStr string) (*model.UserInfo, error) {
 	oid, err := bson.ObjectIDFromHex(idStr)
 	if err != nil {
-		return nil, errors.New("ID user tidak valid")
+		return nil, apperror.ErrInvalidUserID
 	}
 
 	user, err := s.userRepo.FindByID(ctx, oid)
 	if err != nil || user == nil {
-		return nil, errors.New("user tidak ditemukan")
+		return nil, apperror.ErrUserNotFound
 	}
 
 	return &model.UserInfo{

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"tokped-backend/internal/apperror"
 	"tokped-backend/internal/model"
 	"tokped-backend/internal/service"
 
@@ -39,7 +40,7 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 
 	order, err := h.orderService.CreateOrder(c.Request.Context(), userID.(string), userName.(string), req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -67,7 +68,7 @@ func (h *OrderHandler) PayOrder(c *gin.Context) {
 
 	order, err := h.orderService.PayOrder(c.Request.Context(), id, userID.(string), isAdmin)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -137,7 +138,7 @@ func (h *OrderHandler) GetOrderByID(c *gin.Context) {
 	id := c.Param("id")
 	order, err := h.orderService.GetOrderByID(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -167,7 +168,7 @@ func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	}
 
 	if err := h.orderService.UpdateOrderStatus(c.Request.Context(), id, req.Status); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(apperror.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
